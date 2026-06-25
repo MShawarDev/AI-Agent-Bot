@@ -38,29 +38,62 @@ php artisan test --filter=TestName   # run a single test
 composer setup             # install, .env, key:generate, migrate, npm install, build
 ```
 
+**Ingest sales reports (CLI):**
+```bash
+php artisan sales:ingest --client=my-slug        # associate with a client
+php artisan sales:ingest --path=/custom/dir --client=1
+```
+
 ## Environment
 
 Copy `.env.example` to `.env` and set:
 ```
 ANTHROPIC_API_KEY=sk-ant-...
+# Optional overrides:
+# ANTHROPIC_MODEL=claude-sonnet-4-6
+# UPLOAD_MAX_FILE_KB=10240
+# UPLOAD_MAX_FILES_PER_CLIENT=50
 ```
 
 The app uses SQLite by default (`database/database.sqlite`). No database server is needed.
 
 ## Architecture
 
-This is a single-page Laravel chatbot that proxies requests to the Claude API (Anthropic).
+Multi-tenant, login-gated sales-reporting chatbot backed by the Claude API.
 
-**Request flow:**
-1. User sends a message in the browser (Alpine.js `chatApp()` component in `resources/views/chat.blade.php`)
-2. Alpine posts the full conversation history + optional system prompt to `POST /chat/send`
-3. `ChatController::send()` (`app/Http/Controllers/ChatController.php`) forwards the messages array directly to `https://api.anthropic.com/v1/messages` using Laravel's `Http` facade
-4. The controller extracts text from the response `content` blocks and returns `{ message: "..." }`
-5. Alpine appends the assistant reply and scrolls to the bottom
+**Tenancy model:**
+- A `Client` (tenant) owns its `User`s, `SalesReport`s, `Conversation`s/`Message`s, and branding.
+- Tenant is resolved from `auth()->user()->client_id` — no URL slugs.
+- Every DB query that returns tenant data is scoped by `client_id`.
+- Admin users (`is_admin = true`) access the `/admin` area to provision clients and users.
+
+**Request flow (chat):**
+1. User logs in (Laravel Breeze, Blade stack). `/` redirects to login if unauthenticated.
+2. `ChatController::index()` loads the latest conversation + history from the DB.
+3. Alpine.js `chatApp()` (`resources/views/chat.blade.php`) posts the history + `conversation_id` to `POST /chat/send`.
+4. `ChatController::send()` reads the system prompt from `client->system_prompt` (not from the request), scopes report lookups to the client, runs the tool-use loop against `https://api.anthropic.com/v1/messages`, persists each turn into `messages`, and returns `{ message, conversation_id }`.
+5. Alpine renders the assistant reply as sanitized markdown (via `marked` + `DOMPurify`).
+
+**Key files:**
+- `app/Http/Controllers/ChatController.php` — chat + tool-use loop + persistence
+- `app/Http/Controllers/ConversationController.php` — list/load/delete conversations
+- `app/Http/Controllers/ReportUploadController.php` — authenticated report uploads
+- `app/Http/Controllers/Admin/` — admin CRUD (clients, users, reports)
+- `app/Services/ReportIngestionService.php` — shared PDF/DOCX/XLSX parser
+- `app/Models/{Client,User,SalesReport,Conversation,Message}.php`
+- `resources/views/chat.blade.php` — main chatbot UI (Vite, Alpine, marked/DOMPurify)
+- `resources/views/admin/` — admin Blade views
+- `resources/views/reports/` — report upload UI
+- `config/uploads.php` — file size and count limits
+- `config/services.php` — `anthropic.key` and `anthropic.model`
 
 **Key design decisions:**
-- The full `messages` array is sent on every request — the client holds conversation state, not the server. There is no session storage or database persistence for chat history.
-- The model is hardcoded to `claude-haiku-4-5-20251001` in `ChatController::send()`.
-- The system prompt is user-configurable at runtime via a collapsible config panel in the UI; it defaults to `'You are a helpful, friendly AI assistant. Be concise and clear.'`
-- Tailwind CSS and Alpine.js are loaded from CDN in `chat.blade.php` — the Vite pipeline (`resources/css/app.css`, `resources/js/app.js`) exists but is not wired into the chat view.
-- The Anthropic API key is accessed via `config('services.anthropic.key')` → `ANTHROPIC_API_KEY` in `.env`.
+- Model defaults to `claude-haiku-4-5-20251001`; override with `ANTHROPIC_MODEL` env.
+- System prompt is server-side only (from `client->system_prompt`); the browser cannot change it.
+- Conversations persist server-side (`conversations` + `messages` tables); history is loaded on page open.
+- Report files stored privately under `storage/app/reports/{client_id}/`, never web-served.
+- Assets (Tailwind, Alpine, marked, DOMPurify) are bundled via Vite — no CDN dependencies.
+- Public registration is disabled; users are admin-provisioned only.
+- Rate limiter: 20 chat requests per minute per user (`throttle:chat`).
+- Upload limits enforced in `UploadReportRequest` (FormRequest) and re-checked in controller.
+- `QUEUE_CONNECTION=sync` — no persistent queue workers needed (suitable for cPanel shared hosting).

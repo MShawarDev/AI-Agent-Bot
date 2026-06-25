@@ -1,0 +1,147 @@
+name: Deploy to Hostinger
+
+# ─── Trigger ─────────────────────────────────────────────────────────────────
+on:
+  workflow_dispatch:
+    inputs:
+      run_migrations:
+        description: 'Run php artisan migrate --force after deploy?'
+        type: boolean
+        default: false
+      clear_caches:
+        description: 'Clear compiled caches before re-caching? (use after config/route changes)'
+        type: boolean
+        default: true
+
+# ─── Concurrency ─────────────────────────────────────────────────────────────
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false   # never interrupt an in-progress deploy
+
+jobs:
+  build-and-deploy:
+    name: Build → Deploy → Post-deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ── 1. Source ───────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. PHP ──────────────────────────────────────────────────────────────
+      - name: Set up PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo, pdo_mysql, pdo_sqlite, fileinfo, gd, zip, xml
+          coverage: none
+
+      # ── 3. Node ─────────────────────────────────────────────────────────────
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      # ── 4. Composer cache ───────────────────────────────────────────────────
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-prod-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-prod-
+
+      # ── 5. PHP dependencies (production only) ───────────────────────────────
+      - name: Install PHP dependencies
+        run: composer install --no-dev --optimize-autoloader --no-progress --no-interaction
+
+      # ── 6. JS dependencies ──────────────────────────────────────────────────
+      - name: Install Node dependencies
+        run: npm ci
+
+      # ── 7. Build assets ─────────────────────────────────────────────────────
+      - name: Build frontend assets
+        run: npm run build
+
+      # ── 8. SSH agent ────────────────────────────────────────────────────────
+      - name: Load SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Trust host fingerprint
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${{ secrets.SSH_PORT || '22' }}" -H "${{ secrets.SSH_HOST }}" \
+            >> ~/.ssh/known_hosts 2>/dev/null
+
+      # ── 9. Sync files ───────────────────────────────────────────────────────
+      # rsync uploads the full app (including vendor/ and public/build) but
+      # skips sensitive / dev-only / runtime paths.
+      - name: Deploy files via rsync
+        run: |
+          rsync -az --delete \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='node_modules/' \
+            --exclude='tests/' \
+            --exclude='storage/logs/*.log' \
+            --exclude='storage/framework/cache/data/' \
+            --exclude='storage/framework/sessions/' \
+            --exclude='database/database.sqlite' \
+            -e "ssh -p ${{ secrets.SSH_PORT || '22' }}" \
+            ./ \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/"
+
+      # ── 10. Post-deploy commands via SSH ────────────────────────────────────
+      - name: Run post-deploy artisan commands
+        env:
+          SSH_PORT:    ${{ secrets.SSH_PORT || '22' }}
+          SSH_USER:    ${{ secrets.SSH_USER }}
+          SSH_HOST:    ${{ secrets.SSH_HOST }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          RUN_MIGRATE: ${{ inputs.run_migrations }}
+          CLEAR_CACHE: ${{ inputs.clear_caches }}
+        run: |
+          ssh -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" bash -s << 'REMOTE'
+            set -e
+            cd "$DEPLOY_PATH"
+
+            # Ensure storage symlink exists
+            php artisan storage:link --quiet 2>/dev/null || true
+
+            # Ensure storage directories exist and are writable
+            mkdir -p storage/framework/{cache/data,sessions,views} storage/logs bootstrap/cache
+            chmod -R 775 storage bootstrap/cache
+
+            # Clear + rebuild caches
+            if [ "$CLEAR_CACHE" = "true" ]; then
+              php artisan config:clear --quiet
+              php artisan route:clear  --quiet
+              php artisan view:clear   --quiet
+            fi
+
+            php artisan config:cache --quiet
+            php artisan route:cache  --quiet
+            php artisan view:cache   --quiet
+
+            # Migrations (optional, requires confirmation in the workflow UI)
+            if [ "$RUN_MIGRATE" = "true" ]; then
+              php artisan migrate --force
+            fi
+
+            echo "✓ Deploy complete ($(date '+%Y-%m-%d %H:%M:%S %Z'))"
+          REMOTE
+
+      # ── 11. Summary ─────────────────────────────────────────────────────────
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## Deploy summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Host:** \`${{ secrets.SSH_HOST }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Path:** \`${{ secrets.DEPLOY_PATH }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Migrations:** ${{ inputs.run_migrations }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Ref:** \`${{ github.ref_name }}\` @ \`${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"

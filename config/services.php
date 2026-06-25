@@ -1,14 +1,10 @@
 <?php
 
-// This file shows only what to ADD to your existing config/services.php
-// Merge the 'anthropic' block into your existing return array
-
 return [
 
-    // ... your other services (mailgun, postmark, ses, etc.) ...
-
     'anthropic' => [
-        'key' => env('ANTHROPIC_API_KEY'),
+        'key'   => env('ANTHROPIC_API_KEY'),
+        'model' => env('ANTHROPIC_MODEL', 'claude-haiku-4-5-20251001'),
     ],
 
 ];

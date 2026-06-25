@@ -2,69 +2,70 @@
 
 namespace App\Console\Commands;
 
-use App\Models\SalesReport;
+use App\Models\Client;
+use App\Services\ReportIngestionService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Carbon;
-use Smalot\PdfParser\Parser;
 
 class IngestSalesReports extends Command
 {
-    protected $signature = 'sales:ingest {--path= : Directory holding the PDF reports (defaults to <base>/data)}';
+    protected $signature = 'sales:ingest
+        {--path=     : Directory holding the report files (defaults to <base>/data)}
+        {--client=   : Client slug or ID to associate the reports with}';
 
-    protected $description = 'Parse the sales PDF reports locally and store their extracted text in the database';
+    protected $description = 'Parse sales report files and store their extracted text in the database';
+
+    public function __construct(private ReportIngestionService $ingestion)
+    {
+        parent::__construct();
+    }
 
     public function handle(): int
     {
         $dir = $this->option('path') ?: base_path('data');
 
-        $files = glob(rtrim($dir, '/\\').'/*.pdf');
+        $client   = $this->resolveClient();
+        $clientId = $client?->id;
+
+        if ($this->option('client') && ! $client) {
+            $this->error('Client "'.$this->option('client').'" not found.');
+
+            return self::FAILURE;
+        }
+
+        $extensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx'];
+        $pattern    = rtrim($dir, '/\\').'/*.{'.implode(',', $extensions).'}';
+        $files      = glob($pattern, GLOB_BRACE) ?: [];
 
         if (empty($files)) {
-            $this->warn("No PDF files found in {$dir}");
+            $this->warn("No report files found in {$dir}");
 
             return self::SUCCESS;
         }
-
-        $parser = new Parser;
 
         foreach ($files as $path) {
             $name = basename($path);
 
             try {
-                $text = trim($parser->parseFile($path)->getText());
+                $report = $this->ingestion->ingest($path, $name, $clientId);
+                $this->info("Ingested {$name}  ->  {$report->label}");
             } catch (\Throwable $e) {
                 $this->error("Failed to parse {$name}: {$e->getMessage()}");
-
-                continue;
             }
-
-            [$label, $date] = $this->labelAndDate($name);
-
-            SalesReport::updateOrCreate(
-                ['source_file' => $name],
-                ['label' => $label, 'report_date' => $date, 'content' => $text],
-            );
-
-            $this->info("Ingested {$name}  ->  {$label}");
         }
 
         return self::SUCCESS;
     }
 
-    /**
-     * Derive a human label and date from a filename like
-     * "DailyCloseout_6-19-2026_to_6-19-2026.pdf Report.pdf".
-     *
-     * @return array{0: string, 1: ?Carbon}
-     */
-    private function labelAndDate(string $name): array
+    private function resolveClient(): ?Client
     {
-        if (preg_match('/(\d{1,2})-(\d{1,2})-(\d{4})/', $name, $m)) {
-            $date = Carbon::createFromDate((int) $m[3], (int) $m[1], (int) $m[2])->startOfDay();
+        $value = $this->option('client');
 
-            return [$date->format('j M Y'), $date];
+        if (! $value) {
+            return null;
         }
 
-        return [pathinfo($name, PATHINFO_FILENAME), null];
+        return is_numeric($value)
+            ? Client::find($value)
+            : Client::where('slug', $value)->first();
     }
 }
