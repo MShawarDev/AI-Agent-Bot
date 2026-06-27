@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Route;
 // ─── Authenticated chat ───────────────────────────────────────────────────────
 
 Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->name('dashboard');
+
     Route::get('/', [ChatController::class, 'index'])->name('chat');
     Route::post('/chat/send', [ChatController::class, 'send'])
         ->name('chat.send')
@@ -21,6 +25,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/chat/stream', [ChatController::class, 'stream'])
         ->name('chat.stream')
         ->middleware('throttle:chat');
+
+    // Redirect GET on the stream endpoint (e.g. post-login redirect after session expiry)
+    Route::get('/chat/stream', fn () => redirect()->route('chat'))->name('chat.stream.get');
 
     // Conversation history
     Route::get('/conversations', [ConversationController::class, 'index'])->name('conversations.index');
