@@ -26,9 +26,6 @@ Route::middleware('auth')->group(function () {
         ->name('chat.stream')
         ->middleware('throttle:chat');
 
-    // Redirect GET on the stream endpoint (e.g. post-login redirect after session expiry)
-    Route::get('/chat/stream', fn () => redirect()->route('chat'))->name('chat.stream.get');
-
     // Conversation history
     Route::get('/conversations', [ConversationController::class, 'index'])->name('conversations.index');
     Route::get('/conversations/{conversation}', [ConversationController::class, 'show'])->name('conversations.show');
