@@ -30,7 +30,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <input type="checkbox" id="is_admin" name="is_admin" value="1"
-                        class="rounded border-slate-300 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
+                        class="rounded border-slate-300 text-brand shadow-sm focus:ring-brand/40 dark:border-slate-600 dark:bg-slate-700"
                         {{ old('is_admin') ? 'checked' : '' }}>
                     <x-input-label for="is_admin" value="Admin" class="mb-0" />
                 </div>

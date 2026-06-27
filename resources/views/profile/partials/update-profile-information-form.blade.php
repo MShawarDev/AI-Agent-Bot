@@ -1,6 +1,6 @@
 <section>
     <x-ui.section-heading>{{ __('Profile Information') }}</x-ui.section-heading>
-    <p class="text-sm text-slate-500 dark:text-slate-400">
+    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
         {{ __("Update your account's profile information and email address.") }}
     </p>
 

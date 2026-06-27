@@ -1,6 +1,6 @@
 <section>
     <x-ui.section-heading>{{ __('Update Password') }}</x-ui.section-heading>
-    <p class="text-sm text-slate-500 dark:text-slate-400">
+    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
         {{ __('Ensure your account is using a long, random password to stay secure.') }}
     </p>
 

@@ -52,10 +52,14 @@
                             {{ $client->brand_color ?? '#4f46e5' }}
                         </span>
                         <span class="text-slate-400">/</span>
+                        @if($client->accent_color)
                         <span class="inline-flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-                            <span class="inline-block h-4 w-4 rounded-full ring-1 ring-black/10" style="background: {{ $client->accent_color ?? '#4f46e5' }}"></span>
-                            {{ $client->accent_color ?? '—' }}
+                            <span class="inline-block h-4 w-4 rounded-full ring-1 ring-black/10" style="background: {{ $client->accent_color }}"></span>
+                            {{ $client->accent_color }}
                         </span>
+                        @else
+                        <span class="text-slate-400 dark:text-slate-500">—</span>
+                        @endif
                     </dd>
                 </div>
             </dl>

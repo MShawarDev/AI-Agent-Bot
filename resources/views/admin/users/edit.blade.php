@@ -30,15 +30,15 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <input type="checkbox" id="is_admin" name="is_admin" value="1"
-                        class="rounded border-slate-300 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
+                        class="rounded border-slate-300 text-brand shadow-sm focus:ring-brand/40 dark:border-slate-600 dark:bg-slate-700"
                         {{ old('is_admin', $user->is_admin) ? 'checked' : '' }}>
                     <x-input-label for="is_admin" value="Admin" class="mb-0" />
                 </div>
                 <div class="flex items-center justify-between pt-2">
-                    <form method="POST" action="{{ route('admin.users.destroy', $user) }}" onsubmit="return confirm('Delete this user?')">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="text-sm text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300">Delete user</button>
-                    </form>
+                    <button type="button" class="text-sm text-rose-600 hover:text-rose-500 dark:text-rose-400 dark:hover:text-rose-300"
+                            onclick="document.getElementById('delete-user-form').submit()">
+                        Delete user
+                    </button>
                     <div class="flex items-center gap-3">
                         <a href="{{ route('admin.clients.show', $user->client_id) }}"
                             class="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Cancel</a>
@@ -47,5 +47,10 @@
                 </div>
             </form>
         </x-ui.glass-card>
+
+        <form id="delete-user-form" method="POST" action="{{ route('admin.users.destroy', $user) }}"
+              onsubmit="return confirm('Delete this user?')">
+            @csrf @method('DELETE')
+        </form>
     </div>
 </x-app-layout>
