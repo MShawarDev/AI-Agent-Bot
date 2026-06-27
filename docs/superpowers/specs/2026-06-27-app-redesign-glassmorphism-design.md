@@ -54,6 +54,22 @@ New `clients` columns (one migration):
 - Derived tokens computed in CSS with `color-mix()`: glass tints, ring colors,
   glow shadows, hover states — client picks 2 colors, gets a full palette.
 
+## Cross-cutting requirements
+
+These apply to **every** page and component, not a single phase:
+
+- **Responsive / mobile-first:** every page must work and look polished from
+  ~320px up. Design mobile-first, then layer on `sm`/`md`/`lg`/`xl`. No horizontal
+  scroll, tap targets ≥44px, glass blur tuned down on small screens for perf,
+  sidebars collapse to drawers, tables become stacked cards on narrow widths,
+  the chat composer and nav stay reachable with on-screen keyboards.
+- **Dark & light mode:** both modes are first-class and fully styled (no
+  "afterthought" dark mode). Driven by the client's `theme_mode`
+  (`light`/`dark`/`auto`); `auto` follows `prefers-color-scheme`. Tailwind `class`
+  strategy with a pre-paint inline script to avoid flash. No per-user toggle
+  (client-set only). Glass tints, borders, glows, and text contrast all have
+  light- and dark-mode token values that meet WCAG AA contrast.
+
 ## Part 2 — Visual language (tokens)
 
 - **Surfaces:** frosted glass — `backdrop-blur`, semi-transparent bg
@@ -113,9 +129,12 @@ card that updates as values change (Alpine-driven).
 
 - `composer test` stays green.
 - `npm run build` compiles assets cleanly.
-- Manual pass per page group at mobile + desktop widths.
+- Manual pass per page group at mobile (~320–375px), tablet, and desktop widths;
+  no horizontal scroll, tap targets adequate.
 - Confirm theming changes by creating a second client with different colors.
-- Verify dark mode and `prefers-reduced-motion`.
+- Verify **both** light and dark modes on every page group, plus `auto`
+  following the OS setting, with no flash on load.
+- Verify `prefers-reduced-motion`.
 
 ## Implementation phases (ordered, each checkpoint-able)
 
