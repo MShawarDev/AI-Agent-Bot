@@ -4,6 +4,9 @@ namespace App\Services;
 
 use App\Models\SalesReport;
 use Illuminate\Support\Carbon;
+use PhpOffice\PhpWord\Element\Table;
+use PhpOffice\PhpWord\Element\TextRun;
+use PhpOffice\PhpWord\IOFactory;
 use Smalot\PdfParser\Parser as PdfParser;
 
 class ReportIngestionService
@@ -11,23 +14,22 @@ class ReportIngestionService
     /**
      * Parse a file and upsert a SalesReport row for the given client.
      *
-     * @param  string      $filePath  Absolute path to the file
-     * @param  string      $fileName  Original filename (used for the unique key)
-     * @param  int|null    $clientId
-     * @return SalesReport
+     * @param  string  $filePath  Absolute path to the file
+     * @param  string  $fileName  Original filename (used for the unique key)
      *
-     * @throws \RuntimeException  if the file type is unsupported or parsing fails
+     * @throws \RuntimeException if the file type is unsupported or parsing fails
      */
     public function ingest(string $filePath, string $fileName, ?int $clientId = null): SalesReport
     {
         $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
         $text = match ($ext) {
-            'pdf'          => $this->parsePdf($filePath),
-            'docx'         => $this->parseDocx($filePath),
-            'doc'          => $this->parseDoc($filePath),
-            'xlsx', 'xls'  => $this->parseSpreadsheet($filePath),
-            default        => throw new \RuntimeException("Unsupported file type: {$ext}"),
+            'pdf' => $this->parsePdf($filePath),
+            'docx' => $this->parseDocx($filePath),
+            'doc' => $this->parseDoc($filePath),
+            'xlsx', 'xls' => $this->parseSpreadsheet($filePath),
+            'csv' => $this->parseCsv($filePath),
+            default => throw new \RuntimeException("Unsupported file type: {$ext}"),
         };
 
         [$label, $date] = $this->labelAndDate($fileName);
@@ -45,18 +47,18 @@ class ReportIngestionService
 
     private function parseDocx(string $path): string
     {
-        if (! class_exists(\PhpOffice\PhpWord\IOFactory::class)) {
+        if (! class_exists(IOFactory::class)) {
             throw new \RuntimeException('phpoffice/phpword is required for .docx files. Run: composer require phpoffice/phpword');
         }
 
-        $word = \PhpOffice\PhpWord\IOFactory::load($path);
+        $word = IOFactory::load($path);
         $lines = [];
 
         foreach ($word->getSections() as $section) {
             foreach ($section->getElements() as $element) {
-                if ($element instanceof \PhpOffice\PhpWord\Element\TextRun) {
+                if ($element instanceof TextRun) {
                     $lines[] = $element->getText();
-                } elseif ($element instanceof \PhpOffice\PhpWord\Element\Table) {
+                } elseif ($element instanceof Table) {
                     foreach ($element->getRows() as $row) {
                         $cells = [];
                         foreach ($row->getCells() as $cell) {
@@ -108,6 +110,34 @@ class ReportIngestionService
                 }
             }
         }
+
+        return trim(implode("\n", $lines));
+    }
+
+    private function parseCsv(string $path): string
+    {
+        $handle = fopen($path, 'r');
+        if ($handle === false) {
+            throw new \RuntimeException('Could not open CSV file for reading.');
+        }
+
+        $lines = [];
+        $headers = null;
+
+        while (($row = fgetcsv($handle)) !== false) {
+            if ($headers === null) {
+                $headers = $row;
+                $lines[] = implode("\t", $row);
+
+                continue;
+            }
+            $cells = array_map('trim', $row);
+            if (array_filter($cells) !== []) {
+                $lines[] = implode("\t", $cells);
+            }
+        }
+
+        fclose($handle);
 
         return trim(implode("\n", $lines));
     }

@@ -23,7 +23,7 @@ class IngestSalesReports extends Command
     {
         $dir = $this->option('path') ?: base_path('data');
 
-        $client   = $this->resolveClient();
+        $client = $this->resolveClient();
         $clientId = $client?->id;
 
         if ($this->option('client') && ! $client) {
@@ -32,9 +32,9 @@ class IngestSalesReports extends Command
             return self::FAILURE;
         }
 
-        $extensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx'];
-        $pattern    = rtrim($dir, '/\\').'/*.{'.implode(',', $extensions).'}';
-        $files      = glob($pattern, GLOB_BRACE) ?: [];
+        $extensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv'];
+        $pattern = rtrim($dir, '/\\').'/*.{'.implode(',', $extensions).'}';
+        $files = glob($pattern, GLOB_BRACE) ?: [];
 
         if (empty($files)) {
             $this->warn("No report files found in {$dir}");

@@ -46,6 +46,23 @@
      }">
     <x-ui.section-heading>Appearance</x-ui.section-heading>
 
+    @php
+        $viewer = auth()->user();
+        $viewerClientMissing = $viewer && $viewer->client_id && ! $viewer->client;
+        $editingOtherClient = $viewer && $client && $viewer->client_id !== $client->id;
+    @endphp
+
+    @if($viewerClientMissing)
+        <div class="rounded-xl border border-rose-300/60 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:text-rose-300">
+            <p class="font-semibold">Your account isn’t linked to a valid client.</p>
+            <p class="mt-1">Your user’s <code class="font-mono">client_id</code> (#{{ $viewer->client_id }}) doesn’t match any existing client, so <strong>your own session always shows the default theme</strong> regardless of what you set here. Re-assign your account to a client to preview themes live.</p>
+        </div>
+    @elseif($editingOtherClient)
+        <div class="rounded-xl border border-amber-300/60 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:border-amber-500/30 dark:text-amber-300">
+            These settings apply to <strong>{{ $client->name }}</strong>’s users. You belong to a different client, so you won’t see them in your own session — log in as a {{ $client->name }} user to preview.
+        </div>
+    @endif
+
     <div class="grid gap-4 sm:grid-cols-2">
         <div>
             <x-input-label for="brand_color" value="Brand color" />

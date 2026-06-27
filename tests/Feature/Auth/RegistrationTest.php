@@ -20,9 +20,9 @@ class RegistrationTest extends TestCase
     public function test_registration_post_is_disabled(): void
     {
         $response = $this->post('/register', [
-            'name'                  => 'Test User',
-            'email'                 => 'test@example.com',
-            'password'              => 'password',
+            'name' => 'Test User',
+            'email' => 'test@example.com',
+            'password' => 'password',
             'password_confirmation' => 'password',
         ]);
 

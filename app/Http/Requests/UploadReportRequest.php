@@ -13,8 +13,8 @@ class UploadReportRequest extends FormRequest
 
     public function rules(): array
     {
-        $maxKb    = config('uploads.max_file_kb', 10240);
-        $mimes    = implode(',', config('uploads.allowed_mimes', ['pdf', 'doc', 'docx', 'xls', 'xlsx']));
+        $maxKb = config('uploads.max_file_kb', 10240);
+        $mimes = implode(',', config('uploads.allowed_mimes', ['pdf', 'doc', 'docx', 'xls', 'xlsx']));
 
         return [
             'file' => [
@@ -33,7 +33,7 @@ class UploadReportRequest extends FormRequest
 
         return [
             'file.mimes' => "Only {$types} files are accepted.",
-            'file.max'   => "File must be smaller than {$maxMb} MB.",
+            'file.max' => "File must be smaller than {$maxMb} MB.",
         ];
     }
 }

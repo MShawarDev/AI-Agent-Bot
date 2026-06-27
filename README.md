@@ -1,58 +1,139 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# AI Agent Bot — Sales Assistant
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A multi-tenant, login-gated sales-reporting chatbot backed by the Claude API. Clients upload PDF/DOCX/XLSX reports; their users query the data through a conversational interface powered by Claude.
 
-## About Laravel
+## Prerequisites
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.3+
+- Composer
+- Node.js 18+ and npm
+- An [Anthropic API key](https://console.anthropic.com/)
+- SQLite **or** MySQL 5.7+ / MariaDB
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Quick Start (fresh clone)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### 1. Run the one-command setup
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer setup
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+This installs PHP and Node dependencies, copies `.env.example` → `.env`, generates an app key, runs all migrations, and builds frontend assets.
 
-## Contributing
+### 2. Configure your database
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+**Option A — SQLite (zero-config, default)**
 
-## Code of Conduct
+Create the database file (it is gitignored):
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+# Linux / macOS
+touch database/database.sqlite
 
-## Security Vulnerabilities
+# Windows (PowerShell)
+New-Item -ItemType File database/database.sqlite
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Ensure `.env` contains:
 
-## License
+```env
+DB_CONNECTION=sqlite
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+**Option B — MySQL**
+
+Create the database in MySQL first:
+
+```sql
+CREATE DATABASE chatbot;
+```
+
+Then set in `.env`:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=localhost
+DB_PORT=3306
+DB_DATABASE=chatbot
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+After choosing your database, run migrations:
+
+```bash
+php artisan migrate
+```
+
+### 3. Set your Anthropic API key
+
+Open `.env` and fill in:
+
+```env
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Optional overrides:
+
+```env
+ANTHROPIC_MODEL=claude-sonnet-4-6      # default: claude-haiku-4-5-20251001
+UPLOAD_MAX_FILE_KB=10240               # max file size in KB (default 10 MB)
+UPLOAD_MAX_FILES_PER_CLIENT=50         # max reports per client
+```
+
+### 4. Create the first admin user
+
+```bash
+php artisan tinker
+```
+
+```php
+\App\Models\User::create([
+    'name'     => 'Admin',
+    'email'    => 'admin@example.com',
+    'password' => bcrypt('your-password'),
+    'is_admin' => true,
+]);
+```
+
+### 5. Start the development server
+
+```bash
+composer dev
+```
+
+This runs Laravel, the queue worker, and Vite HMR all in parallel. Open [http://localhost:8000](http://localhost:8000) and log in with the admin credentials you just created.
+
+## Admin Area
+
+Visit `/admin` to:
+- Create and manage **Clients** (tenants)
+- Provision **Users** per client (public registration is disabled)
+- Upload and manage **Sales Reports** per client
+
+Regular users are created by the admin and can only see data belonging to their own client.
+
+## Development Commands
+
+| Command | Description |
+|---|---|
+| `composer dev` | Start all services (server + queue + Vite HMR) |
+| `composer test` | Clear config cache and run PHPUnit |
+| `npm run build` | Build production assets |
+| `./vendor/bin/pint` | Fix code style (Laravel Pint) |
+| `php artisan test --filter=TestName` | Run a single test |
+
+### Ingest sales reports via CLI
+
+```bash
+php artisan sales:ingest --client=my-slug
+php artisan sales:ingest --path=/custom/dir --client=1
+```
+
+## Architecture Overview
+
+- **Multi-tenancy:** each `Client` owns its `User`s, `SalesReport`s, and `Conversation`s. Tenant is resolved from the authenticated user's `client_id`.
+- **Chat flow:** Alpine.js frontend → `POST /chat/send` → tool-use loop against Claude API → response rendered as sanitized Markdown.
+- **Storage:** report files live under `storage/app/reports/{client_id}/` and are never web-served directly.
+- **Queue:** `QUEUE_CONNECTION=sync` — no persistent queue workers needed (cPanel-friendly).
+- **Rate limit:** 20 chat requests per minute per user.

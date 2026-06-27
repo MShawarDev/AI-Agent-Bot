@@ -14,33 +14,33 @@ class ReportUploadController extends Controller
 
     public function index(Request $request)
     {
-        $user    = $request->user();
+        $user = $request->user();
         $clientId = $user->client_id;
 
         $reports = SalesReport::where('client_id', $clientId)
             ->orderByDesc('report_date')
             ->get(['id', 'label', 'report_date', 'source_file', 'created_at']);
 
-        $max    = config('uploads.max_files_per_client', 50);
-        $count  = $reports->count();
+        $max = config('uploads.max_files_per_client', 50);
+        $count = $reports->count();
 
         return view('reports.index', compact('reports', 'max', 'count'));
     }
 
     public function store(UploadReportRequest $request)
     {
-        $user     = $request->user();
+        $user = $request->user();
         $clientId = $user->client_id;
 
         // Enforce per-client file count limit
-        $max   = config('uploads.max_files_per_client', 50);
+        $max = config('uploads.max_files_per_client', 50);
         $count = SalesReport::where('client_id', $clientId)->count();
 
         if ($count >= $max) {
             return back()->withErrors(['file' => "Upload limit reached ({$max} files per account). Delete a report before uploading more."]);
         }
 
-        $file     = $request->file('file');
+        $file = $request->file('file');
         $fileName = $file->getClientOriginalName();
 
         // Store privately under storage/app/reports/{clientId}/

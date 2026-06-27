@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ChatController extends Controller
 {
-    private const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
+    private const DEFAULT_MODEL = 'claude-sonnet-4-6';
 
     private const MAX_TOOL_ITERATIONS = 5;
 
@@ -32,9 +32,9 @@ class ChatController extends Controller
 
     public function index(Request $request)
     {
-        $client       = $request->user()->client;
+        $client = $request->user()->client;
         $conversation = Conversation::where('user_id', $request->user()->id)->latest()->first();
-        $history      = $conversation
+        $history = $conversation
             ? $conversation->messages()->orderBy('id')->get(['role', 'content'])
             : collect();
 
@@ -47,11 +47,11 @@ class ChatController extends Controller
     {
         $this->validateChatRequest($request);
 
-        $user         = $request->user();
-        $client       = $user->client;
-        $system       = $client?->system_prompt ?: self::DEFAULT_SYSTEM_PROMPT;
+        $user = $request->user();
+        $client = $user->client;
+        $system = $client?->system_prompt ?: self::DEFAULT_SYSTEM_PROMPT;
         $conversation = $this->resolveConversation($request->integer('conversation_id'), $user, $client);
-        $messages     = $request->messages;
+        $messages = $request->messages;
 
         $this->persistUserMessage($conversation, end($messages));
 
@@ -64,11 +64,12 @@ class ChatController extends Controller
                 return response()->json(['error' => 'API request failed. Check your ANTHROPIC_API_KEY.'], 500);
             }
 
-            $data    = $response->json();
+            $data = $response->json();
             $content = $data['content'] ?? [];
 
             if (($data['stop_reason'] ?? null) === 'tool_use') {
                 [$messages] = $this->handleToolUse($messages, $content, $client?->id);
+
                 continue;
             }
 
@@ -87,11 +88,11 @@ class ChatController extends Controller
     {
         $this->validateChatRequest($request);
 
-        $user         = $request->user();
-        $client       = $user->client;
-        $system       = $client?->system_prompt ?: self::DEFAULT_SYSTEM_PROMPT;
+        $user = $request->user();
+        $client = $user->client;
+        $system = $client?->system_prompt ?: self::DEFAULT_SYSTEM_PROMPT;
         $conversation = $this->resolveConversation($request->integer('conversation_id'), $user, $client);
-        $messages     = $request->messages;
+        $messages = $request->messages;
 
         $this->persistUserMessage($conversation, end($messages));
 
@@ -111,11 +112,12 @@ class ChatController extends Controller
                     return;
                 }
 
-                $data    = $response->json();
+                $data = $response->json();
                 $content = $data['content'] ?? [];
 
                 if (($data['stop_reason'] ?? null) === 'tool_use') {
                     [$messages] = $this->handleToolUse($messages, $content, $client?->id);
+
                     continue;
                 }
 
@@ -137,10 +139,10 @@ class ChatController extends Controller
 
             $this->sseEmit('error', ['error' => 'The assistant took too many steps. Please rephrase.']);
         }, Response::HTTP_OK, [
-            'Content-Type'      => 'text/event-stream',
-            'Cache-Control'     => 'no-cache',
+            'Content-Type' => 'text/event-stream',
+            'Cache-Control' => 'no-cache',
             'X-Accel-Buffering' => 'no',   // Disable Nginx / LiteSpeed buffering
-            'Connection'        => 'keep-alive',
+            'Connection' => 'keep-alive',
         ]);
     }
 
@@ -149,10 +151,10 @@ class ChatController extends Controller
     private function validateChatRequest(Request $request): void
     {
         $request->validate([
-            'messages'           => 'required|array|min:1',
-            'messages.*.role'    => 'required|in:user,assistant',
+            'messages' => 'required|array|min:1',
+            'messages.*.role' => 'required|in:user,assistant',
             'messages.*.content' => 'required|string',
-            'conversation_id'    => 'nullable|integer',
+            'conversation_id' => 'nullable|integer',
         ]);
     }
 
@@ -164,7 +166,7 @@ class ChatController extends Controller
 
         return $conversation ?? Conversation::create([
             'client_id' => $client?->id,
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
         ]);
     }
 
@@ -176,8 +178,8 @@ class ChatController extends Controller
 
         Message::create([
             'conversation_id' => $conversation->id,
-            'role'            => 'user',
-            'content'         => $message['content'],
+            'role' => 'user',
+            'content' => $message['content'],
         ]);
 
         if (! $conversation->title) {
@@ -189,24 +191,25 @@ class ChatController extends Controller
     {
         Message::create([
             'conversation_id' => $conversation->id,
-            'role'            => 'assistant',
-            'content'         => $text,
+            'role' => 'assistant',
+            'content' => $text,
         ]);
     }
 
     private function callAnthropic(array $messages, string $system)
     {
         return Http::withHeaders([
-            'x-api-key'         => config('services.anthropic.key'),
+            'x-api-key' => config('services.anthropic.key'),
             'anthropic-version' => '2023-06-01',
-            'Content-Type'      => 'application/json',
-        ])->timeout(60)->post('https://api.anthropic.com/v1/messages', [
-            'model'      => config('services.anthropic.model', self::DEFAULT_MODEL),
-            'max_tokens' => 1500,
-            'system'     => $system,
-            'tools'      => $this->tools(),
-            'messages'   => $messages,
-        ]);
+            'Content-Type' => 'application/json',
+        ])->when(app()->isLocal(), fn ($h) => $h->withoutVerifying())
+            ->timeout(60)->post('https://api.anthropic.com/v1/messages', [
+              'model' => config('services.anthropic.model', self::DEFAULT_MODEL),
+              'max_tokens' => 4096,
+              'system' => $system,
+              'tools' => $this->tools(),
+              'messages' => $messages,
+          ]);
     }
 
     private function handleToolUse(array $messages, array $content, ?int $clientId): array
@@ -230,17 +233,17 @@ class ChatController extends Controller
                     $result = $this->runTool($block['name'], $block['input'] ?? [], $clientId);
                 } catch (\Throwable $e) {
                     \Log::warning('Tool execution error', [
-                        'tool'      => $block['name'],
-                        'error'     => $e->getMessage(),
+                        'tool' => $block['name'],
+                        'error' => $e->getMessage(),
                         'client_id' => $clientId,
                     ]);
                     $result = 'Tool error: '.$e->getMessage();
                 }
 
                 $toolResults[] = [
-                    'type'        => 'tool_result',
+                    'type' => 'tool_result',
                     'tool_use_id' => $block['id'],
-                    'content'     => $result,
+                    'content' => $result,
                 ];
             }
         }
@@ -258,9 +261,9 @@ class ChatController extends Controller
     private function logApiError($response, User $user, ?Client $client): void
     {
         \Log::error('Anthropic API error', [
-            'status'    => $response->status(),
-            'body'      => $response->body(),
-            'user_id'   => $user->id,
+            'status' => $response->status(),
+            'body' => $response->body(),
+            'user_id' => $user->id,
             'client_id' => $client?->id,
         ]);
     }
@@ -280,22 +283,22 @@ class ChatController extends Controller
     {
         return [
             [
-                'name'         => 'list_sales_reports',
-                'description'  => 'List the daily closeout sales reports that are available, with their dates. Call this first to find which report(s) a question refers to.',
+                'name' => 'list_sales_reports',
+                'description' => 'List all available sales reports with their labels, dates (if known), and filenames. Always call this first to discover what reports exist before fetching one.',
                 'input_schema' => ['type' => 'object', 'properties' => new \stdClass],
             ],
             [
-                'name'         => 'get_sales_report',
-                'description'  => 'Return the full figures (receipts, VAT, payment types, sales by category, etc.) for one daily closeout report.',
+                'name' => 'get_sales_report',
+                'description' => 'Fetch the full content of a sales report by any identifying string — a date (e.g. "2026-06-19"), a label (e.g. "19 Jun 2026"), or the filename (e.g. "1000 Sales Records"). Use the label or filename shown by list_sales_reports when the report is a multi-record dataset rather than a single-date closeout. Once you have the content, filter and calculate the answer yourself.',
                 'input_schema' => [
-                    'type'       => 'object',
+                    'type' => 'object',
                     'properties' => [
-                        'date' => [
-                            'type'        => 'string',
-                            'description' => 'The report date, ideally as YYYY-MM-DD (e.g. 2026-06-19). A label like "19 Jun 2026" also works.',
+                        'query' => [
+                            'type' => 'string',
+                            'description' => 'A date (YYYY-MM-DD or natural language), report label, or filename — any substring that identifies the report.',
                         ],
                     ],
-                    'required' => ['date'],
+                    'required' => ['query'],
                 ],
             ],
         ];
@@ -304,19 +307,25 @@ class ChatController extends Controller
     private function runTool(string $name, array $input, ?int $clientId): string
     {
         if ($name === 'list_sales_reports') {
-            $reports = SalesReport::where('client_id', $clientId)->orderBy('report_date')->get(['label', 'report_date']);
+            $reports = SalesReport::where('client_id', $clientId)->orderBy('report_date')->get(['label', 'report_date', 'source_file']);
 
             if ($reports->isEmpty()) {
                 return 'No sales reports have been ingested yet.';
             }
 
-            return $reports
-                ->map(fn ($r) => $r->label.($r->report_date ? " ({$r->report_date->toDateString()})" : ''))
-                ->implode("\n");
+            return $reports->map(function ($r) {
+                $line = $r->label;
+                if ($r->report_date) {
+                    $line .= ' ('.$r->report_date->toDateString().')';
+                }
+                $line .= ' [file: '.$r->source_file.']';
+
+                return $line;
+            })->implode("\n");
         }
 
         if ($name === 'get_sales_report') {
-            $needle = trim((string) ($input['date'] ?? ''));
+            $needle = trim((string) ($input['query'] ?? $input['date'] ?? ''));
 
             $report = SalesReport::where('client_id', $clientId)
                 ->when($needle !== '', fn ($q) => $q
@@ -326,12 +335,15 @@ class ChatController extends Controller
                 ->first();
 
             if (! $report) {
-                $available = SalesReport::where('client_id', $clientId)->orderBy('report_date')->pluck('label')->implode(', ');
+                $available = SalesReport::where('client_id', $clientId)
+                    ->get(['label', 'source_file'])
+                    ->map(fn ($r) => "{$r->label} [file: {$r->source_file}]")
+                    ->implode(', ');
 
                 return "No report found for \"{$needle}\". Available reports: {$available}";
             }
 
-            return "Report: {$report->label}\n\n{$report->content}";
+            return "Report: {$report->label} [file: {$report->source_file}]\n\n{$report->content}";
         }
 
         return "Unknown tool: {$name}";

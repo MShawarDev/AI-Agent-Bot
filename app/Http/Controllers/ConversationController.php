@@ -24,7 +24,7 @@ class ConversationController extends Controller
 
         return response()->json([
             'conversation' => $conversation->only('id', 'title', 'created_at'),
-            'messages'     => $messages,
+            'messages' => $messages,
         ]);
     }
 

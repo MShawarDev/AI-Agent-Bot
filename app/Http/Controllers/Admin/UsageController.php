@@ -28,9 +28,9 @@ class UsageController extends Controller
                 )->where('created_at', '>=', now()->subDays(30))->count();
 
                 return [
-                    'client'         => $client,
+                    'client' => $client,
                     'messages_total' => $messageCount,
-                    'messages_30d'   => $last30,
+                    'messages_30d' => $last30,
                 ];
             });
 
@@ -46,8 +46,8 @@ class UsageController extends Controller
 
         // API error rate from the log is not easily queryable — surface recent
         // Anthropic failures by checking messages that have no assistant follow-up.
-        $totalMessages    = Message::count();
-        $userMessages     = Message::where('role', 'user')->count();
+        $totalMessages = Message::count();
+        $userMessages = Message::where('role', 'user')->count();
         $assistantMessages = Message::where('role', 'assistant')->count();
 
         return view('admin.usage', compact('perClient', 'dailyVolume', 'totalMessages', 'userMessages', 'assistantMessages'));

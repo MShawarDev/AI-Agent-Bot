@@ -25,15 +25,15 @@ class UserController extends Controller
     public function store(Request $request, Client $client)
     {
         $data = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'is_admin' => 'boolean',
         ]);
 
         $client->users()->create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
+            'name' => $data['name'],
+            'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'is_admin' => $data['is_admin'] ?? false,
         ]);
@@ -49,14 +49,14 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $data = $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email,'.$user->id,
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,'.$user->id,
             'password' => 'nullable|string|min:8|confirmed',
             'is_admin' => 'boolean',
         ]);
 
-        $user->name     = $data['name'];
-        $user->email    = $data['email'];
+        $user->name = $data['name'];
+        $user->email = $data['email'];
         $user->is_admin = $data['is_admin'] ?? false;
         if (! empty($data['password'])) {
             $user->password = Hash::make($data['password']);
