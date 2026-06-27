@@ -17,19 +17,13 @@
         .prose-chat p                    { margin: 0.25rem 0; }
         .prose-chat ul, .prose-chat ol   { margin: 0.25rem 0 0.25rem 1.25rem; }
         .prose-chat table                { border-collapse: collapse; font-size: 0.8rem; margin: 0.5rem 0; width: 100%; }
-        .prose-chat th, .prose-chat td   { border: 1px solid #cbd5e1; padding: 0.25rem 0.5rem; text-align: left; }
-        .prose-chat th                   { background: #f1f5f9; }
+        .prose-chat th, .prose-chat td   { border: 1px solid rgb(148 163 184 / 0.4); padding: 0.25rem 0.5rem; text-align: left; }
+        .prose-chat th                   { background: rgb(148 163 184 / 0.15); }
         .prose-chat strong               { font-weight: 600; }
-        .prose-chat code                 { background: #e2e8f0; border-radius: 3px; padding: 0 3px; font-size: 0.85em; }
+        .prose-chat code                 { background: rgb(148 163 184 / 0.2); border-radius: 3px; padding: 0 3px; font-size: 0.85em; }
         .prose-chat pre code             { background: none; padding: 0; }
-        .prose-chat pre                  { background: #e2e8f0; border-radius: 6px; padding: 0.5rem 0.75rem; overflow-x: auto; margin: 0.5rem 0; }
+        .prose-chat pre                  { background: rgb(148 163 184 / 0.2); border-radius: 6px; padding: 0.5rem 0.75rem; overflow-x: auto; margin: 0.5rem 0; }
     </style>
-    @if($client?->brand_color)
-    <style>
-        :root      { --brand: {{ $client->brand_color }}; }
-        .brand-bg  { background-color: var(--brand) !important; }
-    </style>
-    @endif
     @endpush
 
     {{-- ─── Chat page ─── --}}
@@ -47,18 +41,18 @@
              x-cloak>
 
             {{-- Chat container — fills remaining viewport height on mobile, fixed on desktop --}}
-            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col"
+            <div class="glass-strong flex flex-col overflow-hidden"
                  style="height: calc(100dvh - 4rem - 1.5rem); max-height: 640px; min-height: 420px;">
 
                 {{-- ── Chat header ── --}}
-                <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50 rounded-t-2xl shrink-0">
+                <div class="flex items-center justify-between px-5 py-3.5 border-b border-white/40 dark:border-white/5 bg-white/40 dark:bg-white/5 rounded-t-2xl shrink-0">
                     <div class="flex items-center gap-3">
                         @if($client?->logo_path)
                             <img src="{{ Storage::url($client->logo_path) }}"
                                  alt="{{ $client->name }}"
                                  class="w-9 h-9 rounded-xl object-cover">
                         @else
-                            <div class="w-9 h-9 rounded-xl flex items-center justify-center brand-bg {{ $client?->brand_color ? '' : 'bg-indigo-600' }}">
+                            <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-brand">
                                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3v-3z"/>
@@ -99,7 +93,7 @@
                             <div class="flex flex-col gap-2 w-full max-w-xs">
                                 <template x-for="prompt in starterPrompts" :key="prompt">
                                     <button @click="useStarter(prompt)"
-                                            class="text-left text-xs text-slate-600 border border-slate-200 rounded-xl px-3 py-2 hover:bg-slate-50 transition-colors">
+                                            class="glass hover:shadow-glow transition text-left p-3 text-sm">
                                         <span x-text="prompt"></span>
                                     </button>
                                 </template>
@@ -112,8 +106,8 @@
                         <div :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
                             <div class="max-w-[78%] px-4 py-2.5 text-sm leading-relaxed break-words"
                                  :class="msg.role === 'user'
-                                    ? 'bg-indigo-600 text-white rounded-2xl rounded-br-sm whitespace-pre-wrap'
-                                    : 'bg-slate-100 text-slate-800 rounded-2xl rounded-bl-sm prose-chat'">
+                                    ? 'bg-brand text-white rounded-2xl rounded-br-sm whitespace-pre-wrap'
+                                    : 'bg-white/70 dark:bg-white/5 text-slate-800 dark:text-slate-100 border border-white/50 dark:border-white/10 rounded-2xl rounded-bl-sm prose-chat'">
                                 <template x-if="msg.role === 'assistant'">
                                     <div x-html="renderMarkdown(msg.content)"></div>
                                 </template>
@@ -126,7 +120,7 @@
 
                     {{-- Typing indicator --}}
                     <div x-show="loading" class="flex justify-start">
-                        <div class="bg-slate-100 rounded-2xl rounded-bl-sm px-4 py-3.5">
+                        <div class="bg-white/70 dark:bg-white/5 border border-white/50 dark:border-white/10 rounded-2xl rounded-bl-sm px-4 py-3.5">
                             <div class="flex gap-1.5 items-center">
                                 <span class="w-2 h-2 bg-slate-400 rounded-full dot-1 inline-block"></span>
                                 <span class="w-2 h-2 bg-slate-400 rounded-full dot-2 inline-block"></span>
@@ -137,19 +131,19 @@
                 </div>
 
                 {{-- ── Input area ── --}}
-                <div class="px-4 py-3.5 border-t border-slate-100 flex gap-2.5 shrink-0">
+                <div class="px-4 py-3.5 border-t border-white/40 dark:border-white/5 flex gap-2.5 shrink-0">
                     <input type="text"
                            x-model="input"
                            @keydown.enter="sendMessage"
                            placeholder="Type a message…"
                            :disabled="loading"
-                           class="flex-1 text-sm border border-slate-200 rounded-xl px-4 py-2.5
-                                  focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent
+                           class="flex-1 text-sm glass-input rounded-xl px-4 py-2.5
+                                  focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-transparent
                                   disabled:opacity-50 disabled:cursor-not-allowed transition-shadow">
                     <button @click="sendMessage"
                             :disabled="loading || !input.trim()"
-                            class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium
-                                   px-5 py-2.5 rounded-xl transition-colors
+                            class="bg-brand text-white text-sm font-medium
+                                   px-5 py-2.5 rounded-xl transition-colors hover:brightness-110
                                    disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5">
                         Send
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -23,4 +23,12 @@ class PageRenderTest extends TestCase
 
         $this->actingAs($user)->get('/dashboard')->assertStatus(200)->assertSee('your workspace at a glance', false);
     }
+
+    public function test_chat_page_renders(): void
+    {
+        $client = Client::create(['name' => 'Acme', 'slug' => 'acme', 'bot_name' => 'Acme Bot']);
+        $user = User::factory()->create(['client_id' => $client->id]);
+
+        $this->actingAs($user)->get(route('chat'))->assertStatus(200)->assertSee('Acme Bot');
+    }
 }
