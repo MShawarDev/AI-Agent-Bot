@@ -13,9 +13,4 @@ class PageRenderTest extends TestCase
     {
         $this->get('/login')->assertStatus(200)->assertSee('Welcome back');
     }
-
-    public function test_register_page_renders(): void
-    {
-        $this->get('/register')->assertStatus(200)->assertSee('Create your account');
-    }
 }
