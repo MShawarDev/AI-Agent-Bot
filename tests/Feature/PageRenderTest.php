@@ -55,4 +55,12 @@ class PageRenderTest extends TestCase
 
         $this->actingAs($admin)->get(route('admin.clients.index'))->assertStatus(200)->assertSee('Acme');
     }
+
+    public function test_admin_users_create_renders(): void
+    {
+        $client = Client::create(['name' => 'Acme', 'slug' => 'acme']);
+        $admin = User::factory()->create(['client_id' => $client->id, 'is_admin' => true]);
+
+        $this->actingAs($admin)->get(route('admin.clients.users.create', $client))->assertStatus(200);
+    }
 }
