@@ -39,4 +39,12 @@ class PageRenderTest extends TestCase
 
         $this->actingAs($user)->get(route('reports.index'))->assertStatus(200)->assertSee('Drop a report here', false);
     }
+
+    public function test_profile_page_renders(): void
+    {
+        $client = Client::create(['name' => 'Acme', 'slug' => 'acme']);
+        $user = User::factory()->create(['client_id' => $client->id]);
+
+        $this->actingAs($user)->get(route('profile.edit'))->assertStatus(200);
+    }
 }
