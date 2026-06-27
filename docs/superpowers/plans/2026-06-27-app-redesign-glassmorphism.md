@@ -296,7 +296,7 @@ git commit -m "feat: theme resolver with defaults and hex->rgb"
 - Modify: `tailwind.config.js`, `resources/css/app.css`
 
 **Interfaces:**
-- Produces: Tailwind colors `brand` / `accent` (alpha-aware, read from `--brand-rgb` / `--accent-rgb`); `darkMode: 'class'`; CSS component classes `.glass`, `.glass-strong`, `.glass-input`; keyframes `aurora`, `float-slow`, `fade-up`.
+- Produces: Tailwind colors `brand` / `accent` (alpha-aware, read from `--brand-rgb` / `--accent-rgb`); `darkMode: 'class'`; CSS component classes `.glass`, `.glass-strong`, `.glass-input`; keyframes `aurora`, `fade-up`.
 
 - [ ] **Step 1: Replace `tailwind.config.js`**
 
