@@ -23,14 +23,17 @@ class ClientController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'                => 'required|string|max:255',
-            'slug'                => 'required|string|max:100|unique:clients,slug|alpha_dash',
-            'bot_name'            => 'nullable|string|max:100',
-            'system_prompt'       => 'nullable|string|max:4000',
-            'currency'            => 'nullable|string|max:10',
-            'brand_color'         => 'nullable|string|max:20',
+            'name' => 'required|string|max:255',
+            'slug' => 'required|string|max:100|unique:clients,slug|alpha_dash',
+            'bot_name' => 'nullable|string|max:100',
+            'system_prompt' => 'nullable|string|max:4000',
+            'currency' => 'nullable|string|max:10',
+            'brand_color' => 'nullable|string|max:20',
+            'accent_color' => 'nullable|string|max:20',
+            'theme_mode' => 'nullable|in:light,dark,auto',
+            'bg_style' => 'nullable|in:mesh,aurora,solid,dots',
             'starter_prompts_raw' => 'nullable|string',
-            'is_active'           => 'boolean',
+            'is_active' => 'boolean',
         ]);
 
         $data['starter_prompts'] = $this->parseStarterPrompts($data['starter_prompts_raw'] ?? '');
@@ -56,14 +59,17 @@ class ClientController extends Controller
     public function update(Request $request, Client $client)
     {
         $data = $request->validate([
-            'name'                => 'required|string|max:255',
-            'slug'                => 'required|string|max:100|alpha_dash|unique:clients,slug,'.$client->id,
-            'bot_name'            => 'nullable|string|max:100',
-            'system_prompt'       => 'nullable|string|max:4000',
-            'currency'            => 'nullable|string|max:10',
-            'brand_color'         => 'nullable|string|max:20',
+            'name' => 'required|string|max:255',
+            'slug' => 'required|string|max:100|alpha_dash|unique:clients,slug,'.$client->id,
+            'bot_name' => 'nullable|string|max:100',
+            'system_prompt' => 'nullable|string|max:4000',
+            'currency' => 'nullable|string|max:10',
+            'brand_color' => 'nullable|string|max:20',
+            'accent_color' => 'nullable|string|max:20',
+            'theme_mode' => 'nullable|in:light,dark,auto',
+            'bg_style' => 'nullable|in:mesh,aurora,solid,dots',
             'starter_prompts_raw' => 'nullable|string',
-            'is_active'           => 'boolean',
+            'is_active' => 'boolean',
         ]);
 
         $data['starter_prompts'] = $this->parseStarterPrompts($data['starter_prompts_raw'] ?? '');
