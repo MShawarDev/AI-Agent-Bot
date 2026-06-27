@@ -16,15 +16,15 @@
                 @csrf
 
                 <label @dragover.prevent="over = true" @dragleave.prevent="over = false"
-                       @drop.prevent="over = false; file = $event.dataTransfer.files[0]?.name ?? ''"
+                       @drop.prevent="over = false; $refs.fileInput.files = $event.dataTransfer.files; file = $event.dataTransfer.files[0]?.name ?? ''"
                        class="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-6 py-10 text-center transition"
                        :class="over ? 'border-brand bg-brand/5' : 'border-slate-300/70 dark:border-white/10'">
                     <svg class="mb-3 h-10 w-10 text-brand" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5V18a3 3 0 003 3h12a3 3 0 003-3v-1.5M16.5 7.5L12 3m0 0L7.5 7.5M12 3v13.5"/>
                     </svg>
                     <span class="text-sm font-medium text-slate-700 dark:text-slate-200">Drop a report here, or click to browse</span>
-                    <span class="mt-1 text-xs text-slate-400" x-text="file || 'PDF, DOCX, or XLSX'"></span>
-                    <input type="file" name="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv"
+                    <span class="mt-1 text-xs text-slate-400" x-text="file || 'PDF, DOC, DOCX, XLS, XLSX, CSV'"></span>
+                    <input type="file" name="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv" x-ref="fileInput"
                            class="hidden" @change="file = $event.target.files[0]?.name ?? ''">
                 </label>
 
