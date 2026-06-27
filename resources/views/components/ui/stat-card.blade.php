@@ -13,7 +13,7 @@
         <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand/10 text-brand">{{ $icon }}</div>
     @endisset
     <div>
-        <p class="text-2xl font-bold tabular-nums text-slate-800 dark:text-white" x-text="shown">{{ (int) $value }}</p>
+        <p class="text-2xl font-bold tabular-nums text-slate-800 dark:text-white" x-text="shown.toLocaleString()">{{ number_format((int) $value) }}</p>
         <p class="text-sm text-slate-500 dark:text-slate-400">{{ $label }}</p>
     </div>
 </div>
