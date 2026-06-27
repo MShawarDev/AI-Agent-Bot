@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Client;
+use App\Models\User;
 use App\Support\Theme;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -43,5 +44,15 @@ class ThemeTest extends TestCase
         $this->assertSame('255 0 0', $theme['brand_rgb']);
         $this->assertSame('#ff0000', $theme['accent']); // accent blank -> brand
         $this->assertSame('dark', $theme['mode']);
+    }
+
+    public function test_theme_style_component_renders_brand_vars(): void
+    {
+        $client = Client::create(['name' => 'Acme', 'slug' => 'acme', 'brand_color' => '#ff0000']);
+        $user = User::factory()->create(['client_id' => $client->id]);
+
+        $html = $this->actingAs($user)->blade('<x-theme-style />');
+
+        $html->assertSee('255 0 0', false);
     }
 }
