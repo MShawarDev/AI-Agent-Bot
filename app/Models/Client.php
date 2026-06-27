@@ -15,12 +15,15 @@ class Client extends Model
         'system_prompt',
         'currency',
         'brand_color',
+        'accent_color',
+        'theme_mode',
+        'bg_style',
         'logo_path',
         'starter_prompts',
     ];
 
     protected $casts = [
-        'is_active'      => 'boolean',
+        'is_active' => 'boolean',
         'starter_prompts' => 'array',
     ];
 
