@@ -37,16 +37,16 @@
             </label>
         </div>
 
-        <div class="flex items-center justify-between mt-4">
-            @if (Route::has('password.request'))
-                <a class="text-sm text-brand hover:underline rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand/40" href="{{ route('password.request') }}">
+        @if (Route::has('password.request'))
+            <div class="mb-3 text-right">
+                <a class="text-sm text-brand hover:underline" href="{{ route('password.request') }}">
                     {{ __('Forgot your password?') }}
                 </a>
-            @endif
+            </div>
+        @endif
 
-            <x-primary-button class="w-full justify-center">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
+        <x-primary-button class="w-full justify-center">
+            {{ __('Log in') }}
+        </x-primary-button>
     </form>
 </x-guest-layout>
