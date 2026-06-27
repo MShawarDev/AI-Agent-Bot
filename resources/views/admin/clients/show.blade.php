@@ -1,94 +1,140 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800">{{ $client->name }}</h2>
-            <a href="{{ route('admin.clients.edit', $client) }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700">Edit</a>
+    <div class="mx-auto max-w-7xl px-4 py-8 space-y-6">
+        @if(session('status'))
+            <div class="rounded-xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 ring-1 ring-emerald-500/20 dark:text-emerald-400">
+                {{ session('status') }}
+            </div>
+        @endif
+
+        <x-ui.page-header :title="$client->name">
+            <x-slot name="actions">
+                <x-ui.btn variant="ghost" :href="route('admin.clients.index')">← Back</x-ui.btn>
+                <x-ui.btn :href="route('admin.clients.edit', $client)">Edit</x-ui.btn>
+            </x-slot>
+        </x-ui.page-header>
+
+        {{-- Stat cards --}}
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <x-ui.stat-card label="Users" :value="$client->users_count" />
+            <x-ui.stat-card label="Reports" :value="$client->sales_reports_count" />
+            <x-ui.stat-card label="Conversations" :value="$client->conversations_count" />
         </div>
-    </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            @if(session('status'))
-                <div class="p-3 bg-green-50 text-green-700 rounded-lg text-sm">{{ session('status') }}</div>
-            @endif
+        {{-- Details --}}
+        <x-ui.glass-card>
+            <x-ui.section-heading>Client Details</x-ui.section-heading>
+            <dl class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 text-sm">
+                <div>
+                    <dt class="font-medium text-slate-500 dark:text-slate-400">Slug</dt>
+                    <dd class="mt-1 text-slate-800 dark:text-white font-mono">{{ $client->slug }}</dd>
+                </div>
+                <div>
+                    <dt class="font-medium text-slate-500 dark:text-slate-400">Bot Name</dt>
+                    <dd class="mt-1 text-slate-800 dark:text-white">{{ $client->bot_name ?? '—' }}</dd>
+                </div>
+                <div>
+                    <dt class="font-medium text-slate-500 dark:text-slate-400">Currency</dt>
+                    <dd class="mt-1 text-slate-800 dark:text-white">{{ $client->currency ?? '—' }}</dd>
+                </div>
+                <div>
+                    <dt class="font-medium text-slate-500 dark:text-slate-400">Theme Mode</dt>
+                    <dd class="mt-1 text-slate-800 dark:text-white capitalize">{{ $client->theme_mode ?? '—' }}</dd>
+                </div>
+                <div>
+                    <dt class="font-medium text-slate-500 dark:text-slate-400">Background Style</dt>
+                    <dd class="mt-1 text-slate-800 dark:text-white capitalize">{{ $client->bg_style ?? '—' }}</dd>
+                </div>
+                <div>
+                    <dt class="font-medium text-slate-500 dark:text-slate-400">Brand / Accent Colors</dt>
+                    <dd class="mt-1 flex items-center gap-3">
+                        <span class="inline-flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                            <span class="inline-block h-4 w-4 rounded-full ring-1 ring-black/10" style="background: {{ $client->brand_color ?? '#4f46e5' }}"></span>
+                            {{ $client->brand_color ?? '#4f46e5' }}
+                        </span>
+                        <span class="text-slate-400">/</span>
+                        <span class="inline-flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                            <span class="inline-block h-4 w-4 rounded-full ring-1 ring-black/10" style="background: {{ $client->accent_color ?? '#4f46e5' }}"></span>
+                            {{ $client->accent_color ?? '—' }}
+                        </span>
+                    </dd>
+                </div>
+            </dl>
+        </x-ui.glass-card>
 
-            {{-- Stats --}}
-            <div class="grid grid-cols-3 gap-4">
-                <div class="bg-white shadow-sm rounded-lg p-4 text-center">
-                    <p class="text-2xl font-bold text-indigo-600">{{ $client->users_count }}</p>
-                    <p class="text-sm text-gray-500">Users</p>
-                </div>
-                <div class="bg-white shadow-sm rounded-lg p-4 text-center">
-                    <p class="text-2xl font-bold text-indigo-600">{{ $client->sales_reports_count }}</p>
-                    <p class="text-sm text-gray-500">Reports</p>
-                </div>
-                <div class="bg-white shadow-sm rounded-lg p-4 text-center">
-                    <p class="text-2xl font-bold text-indigo-600">{{ $client->conversations_count }}</p>
-                    <p class="text-sm text-gray-500">Conversations</p>
-                </div>
+        {{-- Users --}}
+        <x-ui.glass-card :padded="false">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-200/60 dark:border-white/10">
+                <x-ui.section-heading>Users</x-ui.section-heading>
+                <x-ui.btn variant="ghost" :href="route('admin.clients.users.create', $client)">+ Add User</x-ui.btn>
             </div>
-
-            {{-- Users --}}
-            <div class="bg-white shadow-sm rounded-lg overflow-hidden">
-                <div class="flex justify-between items-center px-6 py-4 border-b">
-                    <h3 class="font-semibold">Users</h3>
-                    <a href="{{ route('admin.clients.users.create', $client) }}" class="text-sm text-indigo-600 hover:underline">+ Add user</a>
-                </div>
-                <table class="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="bg-gray-50"><tr>
-                        <th class="px-6 py-3 text-left font-medium text-gray-500">Name</th>
-                        <th class="px-6 py-3 text-left font-medium text-gray-500">Email</th>
-                        <th class="px-6 py-3 text-left font-medium text-gray-500">Role</th>
+            <table class="min-w-full divide-y divide-slate-200/60 text-sm dark:divide-white/10">
+                <thead>
+                    <tr class="text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <th class="px-6 py-3">Name</th>
+                        <th class="px-6 py-3">Email</th>
+                        <th class="px-6 py-3">Role</th>
                         <th class="px-6 py-3"></th>
-                    </tr></thead>
-                    <tbody class="divide-y divide-gray-200">
-                        @forelse($client->users as $user)
-                        <tr>
-                            <td class="px-6 py-3">{{ $user->name }}</td>
-                            <td class="px-6 py-3 text-gray-500">{{ $user->email }}</td>
-                            <td class="px-6 py-3">{{ $user->is_admin ? 'Admin' : 'User' }}</td>
-                            <td class="px-6 py-3 text-right">
-                                <a href="{{ route('admin.users.edit', $user) }}" class="text-indigo-600 hover:underline text-xs">Edit</a>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr><td colspan="4" class="px-6 py-4 text-center text-gray-400">No users.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200/60 dark:divide-white/10">
+                    @forelse($client->users as $user)
+                    <tr class="transition hover:bg-white/30 dark:hover:bg-white/5">
+                        <td class="px-6 py-3 font-medium text-slate-800 dark:text-white">{{ $user->name }}</td>
+                        <td class="px-6 py-3 text-slate-500 dark:text-slate-400">{{ $user->email }}</td>
+                        <td class="px-6 py-3">
+                            @if($user->is_admin)
+                                <x-ui.badge color="brand">Admin</x-ui.badge>
+                            @else
+                                <x-ui.badge color="slate">User</x-ui.badge>
+                            @endif
+                        </td>
+                        <td class="px-6 py-3 text-right">
+                            <x-ui.btn variant="ghost" :href="route('admin.users.edit', $user)">Edit</x-ui.btn>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="4" class="px-6 py-8 text-center text-slate-400 dark:text-slate-500">No users yet.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </x-ui.glass-card>
 
-            {{-- Reports --}}
-            <div class="bg-white shadow-sm rounded-lg overflow-hidden">
-                <div class="px-6 py-4 border-b">
-                    <h3 class="font-semibold">Reports</h3>
-                </div>
-                <table class="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="bg-gray-50"><tr>
-                        <th class="px-6 py-3 text-left font-medium text-gray-500">Label</th>
-                        <th class="px-6 py-3 text-left font-medium text-gray-500">Date</th>
-                        <th class="px-6 py-3 text-left font-medium text-gray-500">File</th>
-                        <th class="px-6 py-3"></th>
-                    </tr></thead>
-                    <tbody class="divide-y divide-gray-200">
-                        @forelse($client->salesReports()->orderByDesc('report_date')->get() as $report)
-                        <tr>
-                            <td class="px-6 py-3">{{ $report->label }}</td>
-                            <td class="px-6 py-3 text-gray-500">{{ $report->report_date?->toDateString() }}</td>
-                            <td class="px-6 py-3 text-gray-500 text-xs">{{ $report->source_file }}</td>
-                            <td class="px-6 py-3 text-right">
-                                <form method="POST" action="{{ route('admin.reports.destroy', $report) }}" onsubmit="return confirm('Delete this report?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="text-red-500 hover:underline text-xs">Delete</button>
-                                </form>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr><td colspan="4" class="px-6 py-4 text-center text-gray-400">No reports.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
+        {{-- Reports --}}
+        <x-ui.glass-card :padded="false">
+            <div class="px-6 py-4 border-b border-slate-200/60 dark:border-white/10">
+                <x-ui.section-heading>Reports</x-ui.section-heading>
             </div>
-        </div>
+            <table class="min-w-full divide-y divide-slate-200/60 text-sm dark:divide-white/10">
+                <thead>
+                    <tr class="text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <th class="px-6 py-3">Label</th>
+                        <th class="px-6 py-3">Date</th>
+                        <th class="px-6 py-3">File</th>
+                        <th class="px-6 py-3"></th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200/60 dark:divide-white/10">
+                    @forelse($client->salesReports()->orderByDesc('report_date')->get() as $report)
+                    <tr class="transition hover:bg-white/30 dark:hover:bg-white/5">
+                        <td class="px-6 py-3 text-slate-800 dark:text-white">{{ $report->label }}</td>
+                        <td class="px-6 py-3 text-slate-500 dark:text-slate-400">{{ $report->report_date?->toDateString() }}</td>
+                        <td class="px-6 py-3 text-slate-500 dark:text-slate-400 text-xs">{{ $report->source_file }}</td>
+                        <td class="px-6 py-3 text-right">
+                            <form method="POST" action="{{ route('admin.reports.destroy', $report) }}" onsubmit="return confirm('Delete this report?')">
+                                @csrf @method('DELETE')
+                                <x-ui.btn variant="danger" type="submit">Delete</x-ui.btn>
+                            </form>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="4" class="px-6 py-8 text-center text-slate-400 dark:text-slate-500">No reports yet.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </x-ui.glass-card>
     </div>
 </x-app-layout>

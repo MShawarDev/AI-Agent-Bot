@@ -1,52 +1,87 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800">Clients</h2>
-            <a href="{{ route('admin.clients.create') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700">+ New Client</a>
-        </div>
-    </x-slot>
-
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            @if(session('status'))
-                <div class="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm">{{ session('status') }}</div>
-            @endif
-
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <table class="min-w-full divide-y divide-gray-200 text-sm">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left font-medium text-gray-500">Name</th>
-                            <th class="px-6 py-3 text-left font-medium text-gray-500">Slug</th>
-                            <th class="px-6 py-3 text-left font-medium text-gray-500">Users</th>
-                            <th class="px-6 py-3 text-left font-medium text-gray-500">Reports</th>
-                            <th class="px-6 py-3 text-left font-medium text-gray-500">Status</th>
-                            <th class="px-6 py-3"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                        @forelse($clients as $client)
-                        <tr>
-                            <td class="px-6 py-4 font-medium">{{ $client->name }}</td>
-                            <td class="px-6 py-4 text-gray-500">{{ $client->slug }}</td>
-                            <td class="px-6 py-4">{{ $client->users_count }}</td>
-                            <td class="px-6 py-4">{{ $client->sales_reports_count }}</td>
-                            <td class="px-6 py-4">
-                                <span class="px-2 py-0.5 rounded text-xs {{ $client->is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' }}">
-                                    {{ $client->is_active ? 'Active' : 'Inactive' }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <a href="{{ route('admin.clients.show', $client) }}" class="text-indigo-600 hover:underline mr-3">View</a>
-                                <a href="{{ route('admin.clients.edit', $client) }}" class="text-indigo-600 hover:underline">Edit</a>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">No clients yet.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
+    <div class="mx-auto max-w-7xl px-4 py-8">
+        @if(session('status'))
+            <div class="mb-4 rounded-xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700 ring-1 ring-emerald-500/20 dark:text-emerald-400">
+                {{ session('status') }}
             </div>
-        </div>
+        @endif
+
+        <x-ui.page-header title="Clients">
+            <x-slot name="actions">
+                <x-ui.btn :href="route('admin.clients.create')">+ New Client</x-ui.btn>
+            </x-slot>
+        </x-ui.page-header>
+
+        @if($clients->isEmpty())
+            <x-ui.empty-state title="No clients yet" message="Create your first client to get started.">
+                <x-slot name="action">
+                    <x-ui.btn :href="route('admin.clients.create')">+ New Client</x-ui.btn>
+                </x-slot>
+            </x-ui.empty-state>
+        @else
+            {{-- Desktop table --}}
+            <div class="hidden sm:block">
+                <x-ui.glass-card :padded="false">
+                    <table class="min-w-full divide-y divide-slate-200/60 text-sm dark:divide-white/10">
+                        <thead>
+                            <tr class="text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                <th class="px-6 py-3">Name</th>
+                                <th class="px-6 py-3">Slug</th>
+                                <th class="px-6 py-3">Users</th>
+                                <th class="px-6 py-3">Reports</th>
+                                <th class="px-6 py-3">Status</th>
+                                <th class="px-6 py-3"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200/60 dark:divide-white/10">
+                            @foreach($clients as $client)
+                            <tr class="transition hover:bg-white/30 dark:hover:bg-white/5">
+                                <td class="px-6 py-4 font-semibold text-slate-800 dark:text-white">
+                                    <a href="{{ route('admin.clients.show', $client) }}" class="hover:text-brand">{{ $client->name }}</a>
+                                </td>
+                                <td class="px-6 py-4 text-slate-500 dark:text-slate-400">{{ $client->slug }}</td>
+                                <td class="px-6 py-4 text-slate-700 dark:text-slate-300">{{ $client->users_count }}</td>
+                                <td class="px-6 py-4 text-slate-700 dark:text-slate-300">{{ $client->sales_reports_count }}</td>
+                                <td class="px-6 py-4">
+                                    <x-ui.badge :color="$client->is_active ? 'emerald' : 'slate'">
+                                        {{ $client->is_active ? 'Active' : 'Inactive' }}
+                                    </x-ui.badge>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <x-ui.btn variant="ghost" :href="route('admin.clients.edit', $client)">Edit</x-ui.btn>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </x-ui.glass-card>
+            </div>
+
+            {{-- Mobile stacked cards --}}
+            <div class="space-y-3 sm:hidden">
+                @foreach($clients as $client)
+                <x-ui.glass-card>
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="font-semibold text-slate-800 dark:text-white">
+                                <a href="{{ route('admin.clients.show', $client) }}" class="hover:text-brand">{{ $client->name }}</a>
+                            </p>
+                            <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{{ $client->slug }}</p>
+                        </div>
+                        <x-ui.badge :color="$client->is_active ? 'emerald' : 'slate'">
+                            {{ $client->is_active ? 'Active' : 'Inactive' }}
+                        </x-ui.badge>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between">
+                        <div class="flex gap-4 text-sm text-slate-500 dark:text-slate-400">
+                            <span>{{ $client->users_count }} users</span>
+                            <span>{{ $client->sales_reports_count }} reports</span>
+                        </div>
+                        <x-ui.btn variant="ghost" :href="route('admin.clients.edit', $client)">Edit</x-ui.btn>
+                    </div>
+                </x-ui.glass-card>
+                @endforeach
+            </div>
+        @endif
     </div>
 </x-app-layout>

@@ -1,20 +1,20 @@
 <x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800">New Client</h2>
-    </x-slot>
+    <div class="mx-auto max-w-2xl px-4 py-8">
+        <x-ui.page-header title="New Client">
+            <x-slot name="actions">
+                <x-ui.btn variant="ghost" :href="route('admin.clients.index')">← Back</x-ui.btn>
+            </x-slot>
+        </x-ui.page-header>
 
-    <div class="py-12">
-        <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white shadow-sm sm:rounded-lg p-6">
-                <form method="POST" action="{{ route('admin.clients.store') }}" class="space-y-4">
-                    @csrf
-                    @include('admin.clients._form')
-                    <div class="flex justify-end gap-3 pt-2">
-                        <a href="{{ route('admin.clients.index') }}" class="text-sm text-gray-600 hover:underline">Cancel</a>
-                        <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-indigo-700">Create Client</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+        <x-ui.glass-card>
+            <form method="POST" action="{{ route('admin.clients.store') }}" class="space-y-4">
+                @csrf
+                @include('admin.clients._form')
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <a href="{{ route('admin.clients.index') }}" class="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Cancel</a>
+                    <x-primary-button>Create Client</x-primary-button>
+                </div>
+            </form>
+        </x-ui.glass-card>
     </div>
 </x-app-layout>
