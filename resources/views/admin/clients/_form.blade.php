@@ -21,7 +21,7 @@
 <div>
     <x-input-label for="system_prompt" value="System Prompt (leave blank for default)" />
     <textarea id="system_prompt" name="system_prompt" rows="5"
-              class="glass-input mt-1 font-mono">{{ old('system_prompt', $client?->system_prompt) }}</textarea>
+              class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm font-mono text-sm">{{ old('system_prompt', $client?->system_prompt) }}</textarea>
     <x-input-error :messages="$errors->get('system_prompt')" class="mt-1" />
 </div>
 
@@ -34,7 +34,7 @@
 <div>
     <x-input-label value="Starter Prompts (one per line)" />
     <textarea name="starter_prompts_raw" rows="3"
-              class="glass-input mt-1">{{ old('starter_prompts_raw', implode("\n", $client?->starter_prompts ?? [])) }}</textarea>
+              class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm">{{ old('starter_prompts_raw', implode("\n", $client?->starter_prompts ?? [])) }}</textarea>
     <p class="mt-1 text-xs text-gray-400">These appear as clickable suggestions in the empty chat state.</p>
 </div>
 
