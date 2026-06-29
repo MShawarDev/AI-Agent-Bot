@@ -2,7 +2,11 @@
     <div class="mx-auto max-w-lg px-4 py-8">
         <x-ui.page-header :title="'Edit User: ' . $user->name">
             <x-slot name="actions">
-                <x-ui.btn variant="ghost" :href="route('admin.clients.show', $user->client_id)">← Back</x-ui.btn>
+                @if($user->client_id && $user->client)
+                    <x-ui.btn variant="ghost" :href="route('admin.clients.show', $user->client_id)">← Back</x-ui.btn>
+                @else
+                    <x-ui.btn variant="ghost" :href="route('admin.clients.index')">← Back</x-ui.btn>
+                @endif
             </x-slot>
         </x-ui.page-header>
 
@@ -28,6 +32,18 @@
                     <x-input-label for="password_confirmation" value="Confirm New Password" />
                     <x-text-input id="password_confirmation" name="password_confirmation" type="password" class="mt-1 block w-full" />
                 </div>
+                <div>
+                    <x-input-label for="client_id" value="Client" />
+                    <select id="client_id" name="client_id" class="glass-input mt-1 block w-full">
+                        <option value="">— No client —</option>
+                        @foreach($clients as $c)
+                            <option value="{{ $c->id }}" @selected(old('client_id', $user->client_id) == $c->id)>
+                                {{ $c->name }} ({{ $c->slug }})
+                            </option>
+                        @endforeach
+                    </select>
+                    <x-input-error :messages="$errors->get('client_id')" class="mt-1" />
+                </div>
                 <div class="flex items-center gap-2">
                     <input type="checkbox" id="is_admin" name="is_admin" value="1"
                         class="rounded border-slate-300 text-brand shadow-sm focus:ring-brand/40 dark:border-slate-600 dark:bg-slate-700"
@@ -40,7 +56,7 @@
                         Delete user
                     </button>
                     <div class="flex items-center gap-3">
-                        <a href="{{ route('admin.clients.show', $user->client_id) }}"
+                        <a href="{{ $user->client_id && $user->client ? route('admin.clients.show', $user->client_id) : route('admin.clients.index') }}"
                             class="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200">Cancel</a>
                         <x-primary-button>Save Changes</x-primary-button>
                     </div>

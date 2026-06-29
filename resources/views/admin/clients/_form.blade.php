@@ -21,7 +21,7 @@
 <div>
     <x-input-label for="system_prompt" value="System Prompt (leave blank for default)" />
     <textarea id="system_prompt" name="system_prompt" rows="5"
-              class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm font-mono text-sm">{{ old('system_prompt', $client?->system_prompt) }}</textarea>
+              class="glass-input mt-1 font-mono">{{ old('system_prompt', $client?->system_prompt) }}</textarea>
     <x-input-error :messages="$errors->get('system_prompt')" class="mt-1" />
 </div>
 
@@ -34,7 +34,7 @@
 <div>
     <x-input-label value="Starter Prompts (one per line)" />
     <textarea name="starter_prompts_raw" rows="3"
-              class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm text-sm">{{ old('starter_prompts_raw', implode("\n", $client?->starter_prompts ?? [])) }}</textarea>
+              class="glass-input mt-1">{{ old('starter_prompts_raw', implode("\n", $client?->starter_prompts ?? [])) }}</textarea>
     <p class="mt-1 text-xs text-gray-400">These appear as clickable suggestions in the empty chat state.</p>
 </div>
 
@@ -50,16 +50,20 @@
         $viewer = auth()->user();
         $viewerClientMissing = $viewer && $viewer->client_id && ! $viewer->client;
         $editingOtherClient = $viewer && $client && $viewer->client_id !== $client->id;
+        $viewerEditUrl = $viewerClientMissing ? route('admin.users.edit', $viewer) : null;
     @endphp
 
     @if($viewerClientMissing)
         <div class="rounded-xl border border-rose-300/60 bg-rose-500/10 px-4 py-3 text-sm text-rose-700 dark:border-rose-500/30 dark:text-rose-300">
-            <p class="font-semibold">Your account isn’t linked to a valid client.</p>
-            <p class="mt-1">Your user’s <code class="font-mono">client_id</code> (#{{ $viewer->client_id }}) doesn’t match any existing client, so <strong>your own session always shows the default theme</strong> regardless of what you set here. Re-assign your account to a client to preview themes live.</p>
+            <p class="font-semibold">Your account isn't linked to a valid client.</p>
+            <p class="mt-1">Your user's <code class="font-mono">client_id</code> (#{{ $viewer->client_id }}) doesn't match any existing client, so <strong>your own session always shows the default theme</strong> regardless of what you set here.</p>
+            <a href="{{ $viewerEditUrl }}" class="mt-2 inline-block font-semibold underline underline-offset-2 hover:opacity-80">
+                Fix: re-assign your account to a client &rarr;
+            </a>
         </div>
     @elseif($editingOtherClient)
         <div class="rounded-xl border border-amber-300/60 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:border-amber-500/30 dark:text-amber-300">
-            These settings apply to <strong>{{ $client->name }}</strong>’s users. You belong to a different client, so you won’t see them in your own session — log in as a {{ $client->name }} user to preview.
+            These settings apply to <strong>{{ $client->name }}</strong>'s users. You belong to a different client, so you won't see them in your own session — log in as a {{ $client->name }} user to preview.
         </div>
     @endif
 

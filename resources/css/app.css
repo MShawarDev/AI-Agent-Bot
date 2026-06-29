@@ -26,6 +26,8 @@
         @apply dark:bg-white/5 dark:text-slate-100 dark:border-white/10;
         border-color: rgb(148 163 184 / 0.4);
     }
+    .dark select.glass-input { background-color: rgb(30 41 59); }
+    .dark .glass-input option { background-color: rgb(30 41 59); color: rgb(241 245 249); }
 }
 
 @media (prefers-reduced-motion: reduce) {

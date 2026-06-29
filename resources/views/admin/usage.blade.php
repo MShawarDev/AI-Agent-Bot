@@ -15,10 +15,10 @@
         <x-ui.glass-card>
             <h3 class="font-semibold text-slate-800 dark:text-white mb-4">Messages per day — last 30 days</h3>
             @php $maxVol = $dailyVolume->max('total') ?: 1; @endphp
-            <div class="flex items-end gap-1 h-32">
+            <div class="flex gap-1 h-32">
                 @foreach($dailyVolume as $day)
-                <div class="flex-1 flex flex-col items-center gap-1 group relative">
-                    <div class="w-full bg-brand rounded-t"
+                <div class="flex-1 relative group">
+                    <div class="w-full bg-brand rounded-t absolute bottom-0"
                          style="height: {{ round(($day->total / $maxVol) * 100) }}%"
                          title="{{ $day->date }}: {{ $day->total }} messages">
                     </div>

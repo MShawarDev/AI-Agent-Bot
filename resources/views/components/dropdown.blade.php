@@ -28,7 +28,7 @@ $width = match ($width) {
             class="absolute z-50 mt-2 {{ $width }} {{ $alignmentClasses }}"
             style="display: none;"
             @click="open = false">
-        <div class="rounded-2xl glass-strong ring-0 shadow-glass {{ $contentClasses }}">
+        <div class="rounded-2xl glass-strong ring-0 shadow-glass dark:!bg-slate-800 {{ $contentClasses }}">
             {{ $content }}
         </div>
     </div>

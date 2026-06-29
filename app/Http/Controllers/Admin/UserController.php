@@ -43,7 +43,9 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        return view('admin.users.edit', compact('user'));
+        $clients = Client::orderBy('name')->get();
+
+        return view('admin.users.edit', compact('user', 'clients'));
     }
 
     public function update(Request $request, User $user)
@@ -53,17 +55,23 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,'.$user->id,
             'password' => 'nullable|string|min:8|confirmed',
             'is_admin' => 'boolean',
+            'client_id' => 'nullable|exists:clients,id',
         ]);
 
         $user->name = $data['name'];
         $user->email = $data['email'];
         $user->is_admin = $data['is_admin'] ?? false;
+        $user->client_id = $data['client_id'] ?? null;
         if (! empty($data['password'])) {
             $user->password = Hash::make($data['password']);
         }
         $user->save();
 
-        return redirect()->route('admin.clients.show', $user->client)->with('status', 'User updated.');
+        $redirectClient = $user->client_id;
+
+        return $redirectClient
+            ? redirect()->route('admin.clients.show', $redirectClient)->with('status', 'User updated.')
+            : redirect()->route('admin.clients.index')->with('status', 'User updated (no client assigned).');
     }
 
     public function destroy(User $user)
